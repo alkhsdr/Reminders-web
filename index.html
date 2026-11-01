@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="el">
+<head>
+<title>Reminders by Alkis</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#2e7d32">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="Reminders">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Commissioner:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+/* Layout: one narrow app column, sticky header, bottom sheet editors (iPhone feel). */
+:root{
+  --bg:#f3f6f2; --surface:#ffffff; --surface2:#eaf0e8; --fg:#1d261d; --muted:#5f6d5f; --line:#d8e1d5;
+  --accent:#2e7d32; --accent-ink:#ffffff; --accent-soft:#e3f1e2; --danger:#c62828; --warn:#b26a00;
+  --display:"Commissioner",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111611; --surface:#1a211a; --surface2:#232c23; --fg:#e6ede4; --muted:#9aa89a; --line:#2f3a2f;
+  --accent:#6cc070; --accent-ink:#0d170d; --accent-soft:#1f3320; --danger:#ef7b7b; --warn:#e3a64a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111611; --surface:#1a211a; --surface2:#232c23; --fg:#e6ede4; --muted:#9aa89a; --line:#2f3a2f;
+  --accent:#6cc070; --accent-ink:#0d170d; --accent-soft:#1f3320; --danger:#ef7b7b; --warn:#e3a64a; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.app{max-width:560px;margin:0 auto;padding-bottom:110px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:14px 0 10px;display:flex;align-items:center;gap:10px}
+h1{font-family:var(--display);font-weight:700;font-size:24px;margin:0;letter-spacing:-.01em;flex:1;text-wrap:balance}
+h1 small{display:block;font:500 12px var(--body);color:var(--muted);letter-spacing:.02em}
+h2{font-family:var(--display);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:18px 2px 6px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.iconbtn{width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:18px}
+.list{display:flex;flex-direction:column;background:var(--surface);border-radius:var(--r);border:1px solid var(--line);overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:11px 12px;border-top:1px solid var(--line);text-align:left;width:100%}
+.row:first-child{border-top:0}
+.cat{width:40px;height:40px;border-radius:20px;display:grid;place-items:center;font-size:20px;flex:none}
+.row .main{flex:1;min-width:0}
+.row .t{font-weight:600;overflow-wrap:anywhere}
+.row .s{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.row .s.over{color:var(--danger)}
+.row.done .t{text-decoration:line-through;color:var(--muted)}
+.check{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:15px;color:var(--accent-ink)}
+.check.on{background:var(--accent);border-color:var(--accent)}
+.fab{position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:60px;height:60px;border-radius:30px;background:var(--accent);color:var(--accent-ink);font-size:32px;line-height:1;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:6}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:18px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.tile{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center;font-size:13px;font-weight:600}
+.tile b{display:block;font-size:22px;font-weight:400}
+.tile.sel{border-color:var(--c);background:var(--accent-soft)}
+.banner{background:var(--accent);color:var(--accent-ink);border-radius:var(--r);padding:12px 14px;margin:6px 0 10px;display:flex;gap:10px;align-items:center}
+.banner .main{flex:1;min-width:0}
+.banner button{background:var(--accent-ink);color:var(--accent);border-radius:10px;padding:7px 12px;font-weight:600}
+.note{font-size:13px;color:var(--muted)}
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:20}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--bg);border-radius:18px 18px 0 0;max-height:92%;overflow:auto;
+  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet .inner{max-width:560px;margin:0 auto}
+.sheet header{position:sticky;top:0;background:var(--bg);padding:10px 0}
+.sheet h3{font-family:var(--display);font-size:20px;margin:0;flex:1}
+label.l{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 2px 5px}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 12px;width:100%;min-width:0}
+textarea{min-height:70px;resize:vertical}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:8px}
+.btn{display:block;width:100%;padding:13px;border-radius:12px;font-weight:600;text-align:center;text-decoration:none}
+.btn.pri{background:var(--accent);color:var(--accent-ink)}
+.btn.sec{background:var(--surface);border:1px solid var(--line);color:var(--fg)}
+.btn.dan{background:var(--surface);border:1px solid var(--line);color:var(--danger)}
+.stack{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.switch{display:flex;align-items:center;gap:10px;padding:8px 2px}
+.switch input{width:auto}
+.info{font-size:13px;margin-top:6px}
+.info.ok{color:var(--accent)} .info.bad{color:var(--danger)}
+/* shopping */
+.totals{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.trow{display:flex;gap:8px;align-items:baseline;padding:2px 0;font-variant-numeric:tabular-nums}
+.trow .n{flex:1}
+.trow.first{font-weight:700;color:var(--accent)}
+.addrow{display:flex;gap:8px;margin:12px 0}
+.addrow button{background:var(--accent);color:var(--accent-ink);border-radius:12px;width:52px;font-size:24px;flex:none}
+.item{padding:10px 12px;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .top{display:flex;gap:10px;align-items:center}
+.item .top .t{flex:1;font-weight:600;min-width:0;overflow-wrap:anywhere}
+.item .best{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.cells{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.cell{background:var(--surface2);border-radius:10px;padding:6px 2px;text-align:center;font-variant-numeric:tabular-nums;min-width:0}
+.cell.first{background:var(--accent-soft);outline:1px solid var(--accent)}
+.cell .sn{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell .p{font-weight:700}
+.cell .u{font-size:10px;color:var(--muted)}
+.item .meta{font-size:12px;color:var(--muted);margin-top:4px}
+.item.done .t{text-decoration:line-through;color:var(--muted)}
+.prices{display:flex;flex-direction:column;gap:6px}
+.prow{display:grid;grid-template-columns:1fr 84px 84px;gap:6px;align-items:center}
+.prow input{padding:9px 8px}
+.prow .nm{font-weight:600;font-size:14px;min-width:0}
+.prow.odd .nm::after{content:" · άλλη συσκευασία";color:var(--warn);font-weight:500;font-size:12px}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.links a{color:var(--accent);font-weight:600;font-size:14px}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
+</style>
+</head>
+<body>
+
+
+<div class="app" id="app"></div>
+
+<script>
+(function(){
+const CATS=[
+ ["general","Γενική","📝","#607d8b"],["market","Σούπερ Μάρκετ","🛒","#2e7d32"],["hair","Κομμωτήριο","💇","#8e24aa"],
+ ["nails","Νύχια","💅","#d81b60"],["garage","Συνεργείο","🔧","#455a64"],["cleaners","Καθαριστήριο","👔","#1565c0"],
+ ["gym","Γυμναστήριο","🏋️","#ef6c00"],["lesson","Μάθημα","📚","#00838f"],["medical","Ιατρικά","🩺","#d32f2f"],["services","Υπηρεσίες","🏛️","#5e35b1"]];
+const STORES=[["skl","Σκλαβενίτης","Σκλαβ."],["ab","ΑΒ Βασιλόπουλος","ΑΒ"],["mym","My Market","MyMarket"],["krit","Κρητικός","Κρητικός"],
+ ["mkin","Market In","MarketIn"],["lidl","Lidl","Lidl"],["gal","Γαλαξίας","Γαλαξίας"],["mas","Μασούτης","Μασούτης"],
+ ["baz","Bazaar","Bazaar"],["chalk","Χαλκιαδάκης","Χαλκιαδ."],["synka","ΣΥΝ.ΚΑ","ΣΥΝ.ΚΑ"]];
+const REMIND=[["Χωρίς ειδοποίηση",null],["Την ώρα της υποχρέωσης",0],["15 λεπτά πριν",15],["30 λεπτά πριν",30],["1 ώρα πριν",60],["2 ώρες πριν",120],["1 μέρα πριν",1440],["Άλλη ημερομηνία & ώρα…","c"]];
+const TONES=[["chime","Καμπανάκι"],["beep","Μπιπ"],["bell","Καμπάνα"],["rise","Ανοδικό"],["none","Χωρίς ήχο"]];
+const cat=k=>CATS.find(c=>c[0]===k)||CATS[0];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=v=>v.toFixed(2).replace(".",",")+" €";
+const pad=n=>String(n).padStart(2,"0");
+const DAYS=["Κυριακή","Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή","Σάββατο"];
+const MONTHS=["Ιανουαρίου","Φεβρουαρίου","Μαρτίου","Απριλίου","Μαΐου","Ιουνίου","Ιουλίου","Αυγούστου","Σεπτεμβρίου","Οκτωβρίου","Νοεμβρίου","Δεκεμβρίου"];
+const hm=ms=>{const d=new Date(ms);return pad(d.getHours())+":"+pad(d.getMinutes())};
+const dshort=ms=>{const d=new Date(ms);return DAYS[d.getDay()].slice(0,3)+" "+d.getDate()+"/"+(d.getMonth()+1)+", "+hm(ms)};
+const sod=ms=>{const d=new Date(ms);d.setHours(0,0,0,0);return d.getTime()};
+function dayHeader(ms){const diff=Math.round((sod(ms)-sod(Date.now()))/864e5);const d=new Date(ms);
+  const full=DAYS[d.getDay()]+" "+d.getDate()+" "+MONTHS[d.getMonth()];
+  return diff===0?"Σήμερα · "+full:diff===1?"Αύριο · "+full:diff===-1?"Χθες · "+full:diff<-1?"Εκπρόθεσμες · "+full:full}
+const toLocalInput=ms=>{const d=new Date(ms);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes())};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+/* ---------- storage: db (per-person, syncs across devices) with local fallback ---------- */
+let state={tasks:[]}, docRef=null, saveTimer=null, loaded=false;
+function loadLocal(){try{const s=localStorage.getItem("rba_state");if(s)state=JSON.parse(s)}catch(e){}}
+function saveLocal(){try{localStorage.setItem("rba_state",JSON.stringify(state))}catch(e){}}
+let saving=Promise.resolve();
+function persist(){saveLocal();if(!docRef)return;clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{const body=JSON.parse(JSON.stringify(state));saving=saving.then(()=>docRef.set(body)).catch(()=>{})},600)}
+loadLocal();
+loaded=true;
+
+/* ---------- reminders while the page is open ---------- */
+let ac=null;
+function tone(kind){if(kind==="none")return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+  const seq={chime:[[880,0],[1175,.18],[1568,.36]],beep:[[1000,0],[1000,.25],[1000,.5]],bell:[[660,0],[660,.6]],rise:[[523,0],[659,.15],[784,.3],[1047,.45]]}[kind]||[[880,0]];
+  const t0=ac.currentTime+.02;
+  seq.forEach(([f,t])=>{const o=ac.createOscillator(),g=ac.createGain();o.type=kind==="beep"?"square":"sine";o.frequency.value=f;
+    g.gain.setValueAtTime(0,t0+t);g.gain.linearRampToValueAtTime(kind==="beep"?.12:.3,t0+t+.02);g.gain.exponentialRampToValueAtTime(.001,t0+t+(kind==="bell"?.55:.35));
+    o.connect(g).connect(ac.destination);o.start(t0+t);o.stop(t0+t+.6)});}catch(e){}}
+let ringing=[];
+function checkDue(){const now=Date.now();let changed=false;
+  state.tasks.forEach(t=>{if(!t.done&&t.remindAt&&!t.fired&&t.remindAt<=now&&now-t.remindAt<6*36e5){t.fired=true;changed=true;ringing.push(t.id);tone(t.tone||"chime")}});
+  if(changed){persist();render()}}
+setInterval(checkDue,20000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkDue()});
+
+function gcalLink(t){const f=ms=>{const d=new Date(ms);return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+"T"+pad(d.getUTCHours())+pad(d.getUTCMinutes())+"00Z"};
+  let details=t.notes||"";if(t.cat==="market"&&t.items?.length)details+=(details?"\n\n":"")+"Λίστα:\n"+t.items.filter(i=>!i.done).map(i=>"• "+(i.qty>1?i.qty+"× ":"")+i.name).join("\n");
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(cat(t.cat)[2]+" "+t.title)+"&dates="+f(t.due)+"/"+f(t.due+36e5)+"&details="+encodeURIComponent(details)}
+
+/* ---------- package size & price comparison ---------- */
+const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+function parsePack(s){const t=norm(s).replace(/,/g,".");let m=t.match(/(\d+)\s*[xχ×]\s*(\d+(?:\.\d+)?)\s*(kg|κιλ\S*|gr|g|γρ|ml|cl|lt|l|λιτ\S*)(?![a-zα-ω])/);
+  let mult=1;if(m){mult=+m[1];m=[m[0],m[2],m[3]]}else m=t.match(/(\d+(?:\.\d+)?)\s*(kg|κιλ\S*|gr|g|γρ|ml|cl|lt|l|λιτ\S*|τεμ\S*|τμχ)(?![a-zα-ω])/);
+  if(!m)return null;const n=+m[1]*mult,u=m[2];
+  if(/^(k|κ)/.test(u))return{k:"kg",a:n*1000};if(/^(gr|g|γ)/.test(u))return{k:"kg",a:n};if(u==="ml")return{k:"lt",a:n};if(u==="cl")return{k:"lt",a:n*10};
+  if(/^τ/.test(u))return{k:"τεμ",a:n};return{k:"lt",a:n*1000}}
+const packStr=p=>!p?"":p.k==="τεμ"?p.a+" τεμ":p.k==="kg"?(p.a>=1000?(p.a/1000+"").replace(".",",")+" kg":p.a+" g"):(p.a>=1000?(p.a/1000+"").replace(".",",")+" lt":p.a+" ml");
+const samePack=(a,b)=>a&&b&&a.k===b.k&&Math.abs(a.a-b.a)/Math.max(a.a,b.a)<=.04;
+function compare(item){const offers=[];
+  for(const [k] of STORES){const p=item.prices?.[k];if(!p||!(p.p>0))continue;const pk=parsePack(p.pack||item.pack||item.name);
+    offers.push({k,p:p.p,pk,unit:pk?(pk.k==="τεμ"?p.p/pk.a:p.p/(pk.a/1000)):null})}
+  const votes={};offers.forEach(o=>{if(o.pk){const key=o.pk.k+o.pk.a;votes[key]=(votes[key]||{n:0,pk:o.pk});votes[key].n++}});
+  const ref=Object.values(votes).sort((a,b)=>b.n-a.n)[0]?.pk||parsePack(item.pack||item.name);
+  const same=[],other=[];offers.forEach(o=>(!ref||!o.pk||samePack(o.pk,ref)?same:other).push(o));
+  same.sort((a,b)=>a.p-b.p);return{same,other,ref}}
+
+/* ---------- views ---------- */
+let view={name:"list"};
+function render(){const app=$("#app");
+  if(view.name==="market"){renderMarket(app);return}
+  const tasks=[...state.tasks].sort((a,b)=>(a.done-b.done)||(a.due-b.due));
+  let html=`<header><h1>Reminders<small>by Alkis</small></h1></header>`;
+  ringing.forEach(id=>{const t=state.tasks.find(x=>x.id===id);if(!t)return;
+    html+=`<div class="banner" role="alert"><span style="font-size:24px">${cat(t.cat)[2]}</span><div class="main"><b>${esc(t.title)}</b><div style="font-size:13px">${dshort(t.due)}</div></div>
+    <button data-act="ackdone" data-id="${t.id}">Έγινε</button><button data-act="snooze" data-id="${t.id}">+10′</button></div>`});
+  if(!tasks.length){
+    html+=`<div class="empty"><b style="color:var(--fg)">Δεν έχεις υποχρεώσεις ακόμα.</b><br>Διάλεξε κατηγορία για να ξεκινήσεις ή πάτα το +.</div><h2>Γρήγορη προσθήκη</h2><div class="grid">`+
+      CATS.map(c=>`<button class="tile" data-act="new" data-cat="${c[0]}"><b>${c[2]}</b>${c[1]}</button>`).join("")+`</div>`;
+  }else{let last=null,doneH=false,open=false;
+    tasks.forEach(t=>{let h=null;if(t.done){if(!doneH){h="✔ Ολοκληρωμένες";doneH=true}}else{const d=sod(t.due);if(d!==last){h=dayHeader(t.due);last=d}}
+      if(h){if(open)html+=`</div>`;html+=`<h2>${h}</h2><div class="list">`;open=true}
+      const c=cat(t.cat);const over=!t.done&&t.due<Date.now();
+      let sub="🕒 "+(t.done?dshort(t.due):hm(t.due));if(t.remindAt&&!t.done)sub+=" · 🔔 "+dshort(t.remindAt);
+      if(t.cat==="market"){const n=(t.items||[]).filter(i=>!i.done).length;sub+=" · 🛒 "+n+(n===1?" προϊόν":" προϊόντα")}
+      html+=`<div class="row${t.done?" done":""}"><span class="cat" style="background:${c[3]}22">${c[2]}</span>
+        <button class="main" style="text-align:left" data-act="open" data-id="${t.id}"><div class="t">${esc(t.title)}</div><div class="s${over?" over":""}">${sub}</div></button>
+        <button class="check${t.done?" on":""}" data-act="toggle" data-id="${t.id}" aria-label="Ολοκληρώθηκε">${t.done?"✓":""}</button></div>`});
+    if(open)html+=`</div>`;
+    if(tasks.some(t=>t.done))html+=`<div class="stack"><button class="btn sec" data-act="cleardone">Διαγραφή ολοκληρωμένων</button></div>`;
+  }
+  html+=`<p class="note" style="margin-top:18px">Οι υπενθυμίσεις χτυπούν όσο η εφαρμογή είναι ανοιχτή. Για ειδοποίηση με την οθόνη κλειστή, πάτα «Προσθήκη στο Google Calendar» μέσα στην υποχρέωση. Τα δεδομένα σου μένουν μόνο σε αυτό το κινητό.</p>`;
+  html+=`<button class="fab" data-act="new" aria-label="Νέα υποχρέωση">+</button>`;
+  app.innerHTML=html;}
+
+/* ---------- editor sheet ---------- */
+function openEditor(t,isNew){const draft=JSON.parse(JSON.stringify(t));
+  const host=document.createElement("div");host.innerHTML=`<div class="scrim"></div><div class="sheet" role="dialog" aria-modal="true"><div class="inner">
+  <header><h3>${isNew?"Νέα υποχρέωση":"Επεξεργασία"}</h3><button class="iconbtn" data-x aria-label="Κλείσιμο">✕</button></header>
+  <label class="l">Κατηγορία</label><div class="grid" id="e-cats"></div>
+  <label class="l" for="e-title">Τίτλος</label><input id="e-title" placeholder="π.χ. Ραντεβού στον οδοντίατρο">
+  <label class="l" for="e-due">Ημερομηνία & ώρα</label><input id="e-due" type="datetime-local">
+  <label class="l" for="e-rem">Ειδοποίηση</label><select id="e-rem">${REMIND.map((r,i)=>`<option value="${i}">${r[0]}</option>`).join("")}</select>
+  <div id="e-custom-w" hidden style="margin-top:8px"><input id="e-custom" type="datetime-local" aria-label="Ώρα ειδοποίησης"></div>
+  <div class="info" id="e-info"></div>
+  <label class="l" for="e-tone">Ήχος υπενθύμισης</label><div class="two"><select id="e-tone">${TONES.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select><button class="btn sec" id="e-test" type="button">🔔 Δοκιμή</button></div>
+  <label class="l" for="e-notes">Σημειώσεις</label><textarea id="e-notes" placeholder="Προαιρετικές σημειώσεις"></textarea>
+  <div class="stack">
+    <button class="btn sec" id="e-list" hidden>🛒 Άνοιγμα λίστας ψωνιών</button>
+    <a class="btn sec" id="e-gcal" target="_blank" rel="noopener">📅 Προσθήκη στο Google Calendar</a>
+    <button class="btn pri" id="e-save">Αποθήκευση</button>
+    ${isNew?"":`<button class="btn dan" id="e-del">Διαγραφή</button><div id="e-delc" hidden class="two"><button class="btn dan" id="e-del2">Ναι, διαγραφή</button><button class="btn sec" id="e-del3">Άκυρο</button></div>`}
+  </div></div></div>`;
+  document.body.appendChild(host);
+  const close=()=>host.remove();
+  host.querySelector(".scrim").onclick=close;host.querySelector("[data-x]").onclick=close;
+  const title=host.querySelector("#e-title"),due=host.querySelector("#e-due"),rem=host.querySelector("#e-rem"),cw=host.querySelector("#e-custom-w"),cu=host.querySelector("#e-custom"),
+    info=host.querySelector("#e-info"),tn=host.querySelector("#e-tone"),notes=host.querySelector("#e-notes"),gc=host.querySelector("#e-gcal"),lb=host.querySelector("#e-list");
+  title.value=draft.title;due.value=toLocalInput(draft.due);rem.value=draft.rmode;cu.value=toLocalInput(draft.remindAt||draft.due);tn.value=draft.tone||"chime";notes.value=draft.notes||"";
+  function drawCats(){host.querySelector("#e-cats").innerHTML=CATS.map(c=>`<button type="button" class="tile${c[0]===draft.cat?" sel":""}" style="--c:${c[3]}" data-c="${c[0]}"><b>${c[2]}</b>${c[1]}</button>`).join("");
+    host.querySelectorAll("#e-cats .tile").forEach(b=>b.onclick=()=>{const old=cat(draft.cat)[1];draft.cat=b.dataset.c;
+      if(!title.value.trim()||title.value===old)title.value=draft.cat==="general"?"":cat(draft.cat)[1];drawCats();sync()})}
+  function sync(){draft.title=title.value.trim()||cat(draft.cat)[1];draft.due=new Date(due.value).getTime()||draft.due;draft.rmode=+rem.value;draft.tone=tn.value;draft.notes=notes.value.trim();
+    const r=REMIND[draft.rmode][1];cw.hidden=r!=="c";
+    draft.remindAt=r===null?0:r==="c"?(new Date(cu.value).getTime()||draft.due):draft.due-r*6e4;
+    if(!draft.remindAt){info.textContent="Δεν θα γίνει ειδοποίηση.";info.className="info"}
+    else if(draft.remindAt<=Date.now()){info.textContent="⚠ Η ώρα ειδοποίησης ("+dshort(draft.remindAt)+") έχει ήδη περάσει.";info.className="info bad"}
+    else{info.textContent="Θα ειδοποιηθείς: "+dshort(draft.remindAt);info.className="info ok"}
+    gc.href=gcalLink(draft);lb.hidden=draft.cat!=="market"}
+  [title,due,rem,cu,tn,notes].forEach(e=>e.addEventListener("input",sync));
+  host.querySelector("#e-test").onclick=()=>tone(tn.value);
+  drawCats();sync();
+  function commit(){sync();if(draft.remindAt!==t.remindAt)draft.fired=false;
+    const i=state.tasks.findIndex(x=>x.id===draft.id);if(i>=0)state.tasks[i]=draft;else state.tasks.push(draft);persist()}
+  host.querySelector("#e-save").onclick=()=>{commit();close();if(isNew&&draft.cat==="market"){view={name:"market",id:draft.id}}render()};
+  lb.onclick=()=>{commit();close();view={name:"market",id:draft.id};render()};
+  if(!isNew){const dc=host.querySelector("#e-delc");host.querySelector("#e-del").onclick=()=>{dc.hidden=false;host.querySelector("#e-del").hidden=true};
+    host.querySelector("#e-del3").onclick=()=>{dc.hidden=true;host.querySelector("#e-del").hidden=false};
+    host.querySelector("#e-del2").onclick=()=>{state.tasks=state.tasks.filter(x=>x.id!==t.id);persist();close();render()}}
+  setTimeout(()=>{if(isNew)title.focus()},50)}
+function newTask(c){const d=new Date();d.setHours(d.getHours()+1,0,0,0);
+  return{id:uid(),cat:c||"general",title:c&&c!=="general"?cat(c)[1]:"",due:d.getTime(),rmode:1,remindAt:d.getTime(),tone:"chime",notes:"",done:false,items:[]}}
+
+/* ---------- supermarket list ---------- */
+function renderMarket(app){const t=state.tasks.find(x=>x.id===view.id);if(!t){view={name:"list"};render();return}
+  t.items=t.items||[];const active=t.items.filter(i=>!i.done);
+  let html=`<header><button class="iconbtn" data-act="back" aria-label="Πίσω">‹</button><h1>🛒 ${esc(t.title)}<small>🕒 ${dshort(t.due)}${t.remindAt?" · 🔔 "+dshort(t.remindAt):""}</small></h1><button class="iconbtn" data-act="open" data-id="${t.id}" aria-label="Επεξεργασία">✎</button></header>`;
+  // totals: top-4 baskets
+  const sums={},have={};let best=0,bestMissing=0;
+  active.forEach(i=>{const r=compare(i);r.same.forEach(o=>{sums[o.k]=(sums[o.k]||0)+o.p*(i.qty||1);have[o.k]=(have[o.k]||0)+1});if(r.same.length)best+=r.same[0].p*(i.qty||1);else bestMissing++});
+  const order=Object.keys(sums).sort((a,b)=>(have[b]-have[a])||(sums[a]-sums[b])).slice(0,4);
+  html+=`<div class="totals"><div class="note" style="font-weight:600">Τα 4 φθηνότερα μάρκετ για το καλάθι (${active.length} ${active.length===1?"προϊόν":"προϊόντα"})</div>`;
+  if(!order.length)html+=`<div class="note">Πρόσθεσε προϊόντα και τιμές για να δεις σύγκριση.</div>`;
+  order.forEach((k,i)=>{const s=STORES.find(x=>x[0]===k);html+=`<div class="trow${i===0?" first":""}"><span class="n">${i+1}. ${s[1]}</span><span>${i===0?"🏆 ":""}${money(sums[k])}${have[k]<active.length?` <span class="note">(${active.length-have[k]} χωρίς τιμή)</span>`:""}</span></div>`});
+  if(best>0)html+=`<div class="note" style="margin-top:4px">💡 Αν πάρεις το καθένα από το φθηνότερο: ${money(best)}${bestMissing?` (${bestMissing} χωρίς τιμή)`:""}</div>`;
+  html+=`</div>`;
+  html+=`<form class="addrow" id="m-add"><input id="m-in" placeholder="Τι θα αγοράσεις; (π.χ. 2 γάλα 1lt)" autocomplete="off"><button aria-label="Προσθήκη">+</button></form>`;
+  if(!t.items.length)html+=`<div class="empty">Η λίστα είναι άδεια. Γράψε ένα προϊόν και πάτα +. Πατώντας το προϊόν βάζεις τις τιμές ανά μάρκετ.</div>`;
+  else{html+=`<div class="list">`;
+    [...t.items].sort((a,b)=>a.done-b.done).forEach(i=>{const r=compare(i);
+      html+=`<div class="item${i.done?" done":""}"><div class="top"><button class="check${i.done?" on":""}" data-act="itoggle" data-iid="${i.id}" aria-label="Το πήρα">${i.done?"✓":""}</button>
+        <button class="t" style="text-align:left" data-act="iedit" data-iid="${i.id}">${i.qty>1?i.qty+" × ":""}${esc(i.name)}</button><span class="best">${r.same.length?money(r.same[0].p*(i.qty||1)):""}</span></div>`;
+      if(r.same.length){html+=`<div class="cells">`+r.same.slice(0,4).map((o,n)=>{const s=STORES.find(x=>x[0]===o.k);
+        return `<button class="cell${n===0?" first":""}" data-act="iedit" data-iid="${i.id}"><div class="sn">${n+1}. ${s[2]}</div><div class="p">${money(o.p)}</div><div class="u">${o.unit&&o.pk?money(o.unit)+"/"+o.pk.k:"&nbsp;"}</div></button>`}).join("")+`</div>`}
+      const meta=[];if(r.ref)meta.push("📦 "+packStr(r.ref));if(r.same.length>4)meta.push("+"+(r.same.length-4)+" μάρκετ ακόμα");if(r.other.length)meta.push(r.other.length+" με άλλη συσκευασία");
+      if(!r.same.length)meta.push("Πάτα για να βάλεις τιμές");
+      html+=`<div class="meta">${meta.join(" · ")}</div></div>`});
+    html+=`</div><div class="stack"><button class="btn sec" data-act="iclear">🧹 Αφαίρεση όσων πήρα</button></div>`}
+  app.innerHTML=html;
+  $("#m-add").onsubmit=e=>{e.preventDefault();const raw=$("#m-in").value.trim();if(!raw)return;
+    let qty=1,name=raw,m=raw.match(/^(\d{1,3})\s*[xXχΧ×]?\s+(.+)$/);if(m){qty=+m[1];name=m[2]}else if(m=raw.match(/^(.+?)\s+[xXχΧ×]\s*(\d{1,3})$/)){name=m[1];qty=+m[2]}
+    t.items.push({id:uid(),name:name.trim(),qty:Math.max(1,qty),done:false,prices:{}});persist();render();setTimeout(()=>$("#m-in")?.focus(),30)}}
+
+function itemSheet(t,item){const host=document.createElement("div");const r0=compare(item);
+  host.innerHTML=`<div class="scrim"></div><div class="sheet" role="dialog" aria-modal="true"><div class="inner">
+  <header><h3>Προϊόν</h3><button class="iconbtn" data-x aria-label="Κλείσιμο">✕</button></header>
+  <label class="l" for="i-name">Όνομα</label><input id="i-name">
+  <div class="two" style="margin-top:8px"><div><label class="l" for="i-pack">Συσκευασία</label><input id="i-pack" placeholder="π.χ. 1lt, 500g, 6x1,5lt"></div>
+   <div><label class="l" for="i-qty">Ποσότητα</label><input id="i-qty" type="number" min="1" inputmode="numeric"></div></div>
+  <label class="l">Τιμές ανά μάρκετ (€ και συσκευασία αν διαφέρει)</label>
+  <div class="links"><a target="_blank" rel="noopener" id="i-bsm">🔎 Δες τιμές στο BasketSmart</a><a target="_blank" rel="noopener" href="https://posokanei.gov.gr/">🔎 PosoKanei</a></div>
+  <div class="prices" id="i-prices" style="margin-top:10px"></div>
+  <div class="stack"><button class="btn pri" id="i-save">Αποθήκευση</button><button class="btn dan" id="i-del">Αφαίρεση από τη λίστα</button></div></div></div>`;
+  document.body.appendChild(host);const close=()=>host.remove();
+  host.querySelector(".scrim").onclick=close;host.querySelector("[data-x]").onclick=close;
+  const nm=host.querySelector("#i-name"),pk=host.querySelector("#i-pack"),q=host.querySelector("#i-qty");
+  nm.value=item.name;pk.value=item.pack||"";q.value=item.qty||1;
+  const odd=new Set(r0.other.map(o=>o.k));
+  host.querySelector("#i-prices").innerHTML=STORES.map(s=>{const p=item.prices?.[s[0]]||{};
+    return `<div class="prow${odd.has(s[0])?" odd":""}"><span class="nm">${s[1]}</span><input inputmode="decimal" data-p="${s[0]}" placeholder="€" value="${p.p>0?String(p.p).replace(".",","):""}" aria-label="Τιμή ${s[1]}"><input data-k="${s[0]}" placeholder="συσκ." value="${esc(p.pack||"")}" aria-label="Συσκευασία ${s[1]}"></div>`}).join("");
+  const bsm=()=>host.querySelector("#i-bsm").href="https://basketsmart.gr/search?q="+encodeURIComponent(nm.value.trim());bsm();nm.addEventListener("input",bsm);
+  host.querySelector("#i-save").onclick=()=>{item.name=nm.value.trim()||item.name;item.pack=pk.value.trim();item.qty=Math.max(1,parseInt(q.value)||1);item.prices={};
+    host.querySelectorAll("[data-p]").forEach(inp=>{const v=parseFloat(inp.value.replace(/\s|€/g,"").replace(",","."));const pack=host.querySelector(`[data-k="${inp.dataset.p}"]`).value.trim();
+      if(v>0)item.prices[inp.dataset.p]={p:Math.round(v*100)/100,pack}});persist();close();render()};
+  host.querySelector("#i-del").onclick=()=>{t.items=t.items.filter(x=>x.id!==item.id);persist();close();render()}}
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
+  const t=state.tasks.find(x=>x.id===(b.dataset.id||view.id));
+  if(a==="new"){openEditor(newTask(b.dataset.cat),true)}
+  else if(a==="open"&&t){if(t.cat==="market"&&view.name!=="market"){view={name:"market",id:t.id};render()}else openEditor(t,false)}
+  else if(a==="toggle"&&t){t.done=!t.done;persist();render()}
+  else if(a==="cleardone"){state.tasks=state.tasks.filter(x=>!x.done);persist();render()}
+  else if(a==="ackdone"&&t){t.done=true;ringing=ringing.filter(x=>x!==t.id);persist();render()}
+  else if(a==="snooze"&&t){t.remindAt=Date.now()+6e5;t.fired=false;ringing=ringing.filter(x=>x!==t.id);persist();render()}
+  else if(a==="back"){view={name:"list"};render()}
+  else if(a==="itoggle"&&t){const i=t.items.find(x=>x.id===b.dataset.iid);if(i){i.done=!i.done;persist();render()}}
+  else if(a==="iedit"&&t){const i=t.items.find(x=>x.id===b.dataset.iid);if(i)itemSheet(t,i)}
+  else if(a==="iclear"&&t){t.items=t.items.filter(x=>!x.done);persist();render()}
+});
+render();checkDue();
+})();
+</script>
+
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{})}</script>
+
+</body>
+</html>
